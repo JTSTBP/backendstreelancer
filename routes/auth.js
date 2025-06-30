@@ -75,6 +75,10 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Server error during login" });
   }
 });
+router.get("/gethii", async (req, res) => {
+  return res.send("hiii");
+});
+
 
 
 router.post("/contact", async (req, res) => {
