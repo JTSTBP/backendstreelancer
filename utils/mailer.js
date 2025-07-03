@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
  * @returns {Promise} - Nodemailer sendMail promise
  */
 const sendContactEmail = async (formData) => {
-  const { company, name, email, regions, workModel, country, teamSize, requirements } = formData;
+  const { company, name, email,phone, regions, workModel, country, teamSize, requirements } = formData;
 
 
   const mailOptions = {
@@ -26,6 +26,7 @@ const sendContactEmail = async (formData) => {
       <h3>New Contact Form Submission</h3>
       <p><strong>Company:</strong> ${company}</p>
       <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Phone Number:</strong> ${phone}</p>
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Regions of Interest:</strong> ${regions.join(", ")}</p>
       <p><strong>Work Model:</strong> ${workModel}</p>

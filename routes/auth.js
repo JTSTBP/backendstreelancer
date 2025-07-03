@@ -1,11 +1,11 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
 const sendContactEmail = require("../utils/mailer");
 const User = require("../models/User");
 const RegisteredusersDetails = require("../models/userDetails");
 const ContactInquiry = require("../models/Contact");
+const DEISurvey = require("../models/DeiSurvey");
 
 const router = express.Router();
 
@@ -29,7 +29,6 @@ router.post("/register", async(req, res) => {
  
 
 });
-
 
 // Signup
 router.post("/signup", async (req, res) => {
@@ -75,12 +74,8 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Server error during login" });
   }
 });
-router.get("/gethii", async (req, res) => {
-  return res.send("hiii");
-});
 
-
-
+// contact
 router.post("/contact", async (req, res) => {
   try {
     const newContact = new ContactInquiry(req.body);
@@ -92,6 +87,19 @@ router.post("/contact", async (req, res) => {
   } catch (err) {
     console.error("Contact form error:", err);
     res.status(500).json({ message: "Server error while submitting contact form" });
+  }
+});
+
+// Deisurvey
+router.post("/dei-survey", async (req, res) => {
+  try {
+  
+    const newSurvey = new DEISurvey(req.body);
+    await newSurvey.save();
+    res.status(200).json({ message: "Survey submitted successfully" });
+  } catch (error) {
+    console.error("Survey submission error:", error);
+    res.status(500).json({ message: "Server error while submitting survey" });
   }
 });
 
