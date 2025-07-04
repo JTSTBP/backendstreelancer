@@ -102,5 +102,8 @@ router.post("/dei-survey", async (req, res) => {
     res.status(500).json({ message: "Server error while submitting survey" });
   }
 });
+router.get("/health", (req, res) => {
+  res.status(200).json({ message: "Server is running ✅" });
+});
 
 module.exports = router;
