@@ -17,7 +17,7 @@ router.post("/register", async(req, res) => {
   try {
    const user = await User.findOne({ email: formData.personal.email });
 
-    console.log(user,"user")
+    (user,"user")
     if (!user) return res.status(400).json({ message: "Email is not Registered" });
    
     const newUser = new RegisteredusersDetails(formData);
@@ -104,6 +104,30 @@ router.post("/dei-survey", async (req, res) => {
 });
 router.get("/health", (req, res) => {
   res.status(200).json({ message: "Server is running ✅" });
+});
+
+
+// Check if a survey exists for a given email
+router.post("/check-dei-survey", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const existingSurvey = await DEISurvey.findOne({ "info1.email": email });
+    console.log(existingSurvey,"existingSurvey")
+
+    if (existingSurvey) {
+      return res.status(200).json({ exists: true, message: "Survey found for this email" });
+    } else {
+      return res.status(200).json({ exists: false, message: "No survey found for this email" });
+    }
+  } catch (error) {
+    console.error("Error checking survey for email:", error);
+    res.status(500).json({ message: "Server error while checking survey" });
+  }
 });
 
 module.exports = router;
