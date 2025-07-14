@@ -13,6 +13,8 @@ const contactInquirySchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  phone: { type: String, required: true },
+  message:{type:String}
 });
 
 module.exports = mongoose.model("ContactInquiry", contactInquirySchema);
