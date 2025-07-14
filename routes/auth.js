@@ -18,7 +18,7 @@ router.post("/register", async(req, res) => {
   try {
    const user = await User.findOne({ email: formData.personal.email });
 
-    (user,"user")
+ 
     if (!user) return res.status(400).json({ message: "Email is not Registered" });
    
     const newUser = new RegisteredusersDetails(formData);
