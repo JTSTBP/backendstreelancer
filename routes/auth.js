@@ -2,13 +2,113 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { sendContactEmail, sendSimpleContactEmail,sendcontactcommunityemail }  = require("../utils/mailer");
-
+const { OAuth2Client } = require('google-auth-library');
 const User = require("../models/User");
 const RegisteredusersDetails = require("../models/userDetails");
 const ContactInquiry = require("../models/Contact");
 const DEISurvey = require("../models/DeiSurvey");
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+
 const router = express.Router();
+
+router.post('/google', async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    // 1. Verify token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+    console.log(email,name)
+    // 2. Check if user exists
+    let user = await User.findOne({ email });
+
+    let isNewUser = false;
+
+    if (!user) {
+      // 3. Create a new user (basic info only)
+      user = new User({
+        email,
+        name,
+        profilePic: picture,
+        loginType: 'google',
+        isRegistrationComplete: false, // IMPORTANT
+      });
+
+      await user.save();
+      isNewUser = true;
+    }
+console.log("success",)
+    // 4. Generate JWT
+    const accessToken = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.status(200).json({
+      message: 'Login successful',
+      token: accessToken,
+      userId: user._id,
+      isNewUser,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ message: 'Google authentication failed' });
+  }
+});
+
+
+router.post('/google-login', async (req, res) => {
+  const { access_token } = req.body;
+
+  try {
+    const ticket = await client.getTokenInfo(access_token);
+    const email = tokenInfo.email;
+
+    if (!email) {
+      return res.status(400).json({ message: "Invalid Google access token" });
+    }
+
+    // Check if user exists in your database
+    let user = await RegisteredUsers.findOne({ email });
+
+    let isNewUser = false;
+
+    if (!user) {
+      // Create a new user
+      user = new RegisteredUsers({
+        email,
+        isGoogleUser: true,
+        registrationCompleted: false, // You can customize based on your logic
+      });
+
+      await user.save();
+      isNewUser = true;
+    }
+
+    // Generate your own JWT token
+    const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.status(200).json({
+      message: "Google login successful",
+      token,
+      isNewUser,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ message: "Invalid Google token" });
+  }
+});
+
 
 
 // Registration
