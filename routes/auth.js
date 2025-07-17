@@ -279,8 +279,17 @@ router.post("/dei-survey", async (req, res) => {
     res.status(500).json({ message: "Server error while submitting survey" });
   }
 });
+
+const CLIENT_URL = process.env.CLIENT_REDIRECT_URI;
+const linkdin =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5000/api/linkedin/callback"
+    : `${CLIENT_URL}/api/linkedin/callback`;
 router.get("/health", (req, res) => {
-  res.status(200).json({ message: "Server is running ✅" });
+  res.status(200).json({ message: "Server is running ✅",
+    environment: process.env.NODE_ENV,
+    clientURL: CLIENT_URL,
+    linkedinCallback: linkdin, });
 });
 
 
