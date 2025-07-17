@@ -285,6 +285,7 @@ const linkdin =
   process.env.NODE_ENV === "development"
     ? "http://localhost:5000/api/linkedin/callback"
     : `${CLIENT_URL}/api/linkedin/callback`;
+    
 router.get("/health", (req, res) => {
   res.status(200).json({ message: "Server is running ✅",
     environment: process.env.NODE_ENV,
