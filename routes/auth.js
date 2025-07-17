@@ -7,62 +7,15 @@ const User = require("../models/User");
 const RegisteredusersDetails = require("../models/userDetails");
 const ContactInquiry = require("../models/Contact");
 const DEISurvey = require("../models/DeiSurvey");
+const axios = require('axios');
+
+
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
 const router = express.Router();
 
-router.post('/google', async (req, res) => {
-  const { token } = req.body;
-
-  try {
-    // 1. Verify token
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
-    console.log(email,name)
-    // 2. Check if user exists
-    let user = await User.findOne({ email });
-
-    let isNewUser = false;
-
-    if (!user) {
-      // 3. Create a new user (basic info only)
-      user = new User({
-        email,
-        name,
-        profilePic: picture,
-        loginType: 'google',
-        isRegistrationComplete: false, // IMPORTANT
-      });
-
-      await user.save();
-      isNewUser = true;
-    }
-console.log("success",)
-    // 4. Generate JWT
-    const accessToken = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(200).json({
-      message: 'Login successful',
-      token: accessToken,
-      userId: user._id,
-      isNewUser,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(401).json({ message: 'Google authentication failed' });
-  }
-});
 
 
 router.post('/google-login', async (req, res) => {
@@ -77,13 +30,13 @@ router.post('/google-login', async (req, res) => {
     }
 
     // Check if user exists in your database
-    let user = await RegisteredUsers.findOne({ email });
+    let user = await User.findOne({ email });
 
     let isNewUser = false;
 
     if (!user) {
       // Create a new user
-      user = new RegisteredUsers({
+      user = new User({
         email,
         isGoogleUser: true,
         registrationCompleted: false, // You can customize based on your logic
@@ -109,6 +62,108 @@ router.post('/google-login', async (req, res) => {
   }
 });
 
+
+// Linkdin login
+
+const LINKEDIN_REDIRECT_URI =
+   process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5000/api/linkedin/callback'
+    :`${process.env.REACT_APP_BACKEND_URL}/api/linkedin/callback`;
+
+    const frontend_URL =
+   process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3000'
+    :process.env.CLIENT_REDIRECT_URI;
+ console.log("NODE_ENV:", process.env.NODE_ENV);
+
+
+// get userData
+const getUserData=async(accessToken)=>{
+const response = await fetch("https://api.linkedin.com/v2/userinfo",
+  {
+    method:"get",
+    headers:{
+      Authorization:`Bearer ${accessToken}`
+    }
+  }
+)
+if(!response.ok){
+    throw new Error(response.statusText)
+  }
+  const userData= await response.json()
+  return userData
+
+}
+
+// getaccesstoken fun
+const getAccessToken=async(code)=>{
+const body =new URLSearchParams({
+  grant_type:"authorization_code",
+  code:code,
+  client_id:process.env.REACT_LINKEDIN_CLIENT_ID,
+  client_secret:process.env.REACT_LINKEDIN_CLIENT_SECRET,
+  redirect_uri:LINKEDIN_REDIRECT_URI
+
+})
+
+  const response=await fetch("https://www.linkedin.com/oauth/v2/accessToken" , {
+    method:"post",
+    headers:{
+      "Content-type":"application/x-www-form-urlencoded"
+    },
+    body:body.toString()
+  })
+  console.log(LINKEDIN_REDIRECT_URI,"LINKEDIN_REDIRECT_URI",frontend_URL )
+  if(!response.ok){
+    throw new Error(response.statusText)
+  }
+  const accessToken= await response.json()
+  return accessToken
+}
+
+router.get("/linkedin/callback",async(req,res)=>{
+try {
+  const {code}=req.query
+  // get accesstoken
+  const accessToken=await getAccessToken(code)
+
+// get userData from accesstoken
+const userData=await getUserData(accessToken.access_token)
+
+
+ const email = userData.email;
+    if (!email) {
+      return res.status(400).json({ message: "Unable to retrieve email from LinkedIn" });
+    }
+
+    let user = await User.findOne({ email });
+    let isNewUser = false;
+
+     if (!user) {
+      // Step 4: Create new user if not found
+      user = new User({
+        email,
+        name: userData.name,
+        isLinkedInUser: true,
+        registrationCompleted: false,
+        profilePicture: userData.picture,
+      });
+
+      await user.save();
+      isNewUser = true;
+    }
+     const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+ res.redirect(`${frontend_URL}/linkedin-success?token=${token}&isNewUser=${isNewUser}`);
+
+} catch (error) {
+  console.error(error);
+    res.status(500).json({ message: "LinkedIn login failed", error });
+  
+}
+})
 
 
 // Registration
