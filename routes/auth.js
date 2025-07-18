@@ -317,4 +317,30 @@ router.post("/check-dei-survey", async (req, res) => {
   }
 });
 
+
+
+// Get ALL registered users' details
+router.get("/registered-users", async (req, res) => {
+  try {
+    const users = await User.find(); // fetch all documents
+    res.json(users); // send them as JSON array
+  } catch (error) {
+    console.error("Error fetching registered users:", error);
+    res.status(500).json({ message: "Server error fetching registered users." });
+  }
+});
+
+// DELETE a user by ID
+router.delete("/delete-user/:id", async (req, res) => {
+  try {
+    console.log(req.params.id,"ppp")
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "User deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: "Server error deleting user." });
+  }
+});
+
+
 module.exports = router;
