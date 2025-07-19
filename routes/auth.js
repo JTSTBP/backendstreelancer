@@ -172,9 +172,11 @@ router.post("/register", async(req, res) => {
 
   try {
    const user = await User.findOne({ email: formData.personal.email });
-
+   const reguser=await RegisteredusersDetails.findOne({ "personal.email":formData.personal.email });
+console.log(user,reguser)
  
-    if (!user) return res.status(400).json({ message: "Email is not Registered" });
+    if (!user) return res.status(400).json({ message: "No account with this Email please create account" });
+   if(reguser) return res.status(400).json({ message: "Email is already registered please use the same email which you create your account" });
    
     const newUser = new RegisteredusersDetails(formData);
     await newUser.save();
@@ -317,12 +319,10 @@ router.post("/check-dei-survey", async (req, res) => {
   }
 });
 
-
-
 // Get ALL registered users' details
 router.get("/registered-users", async (req, res) => {
   try {
-    const users = await User.find(); // fetch all documents
+    const users = await RegisteredusersDetails.find(); // fetch all documents
     res.json(users); // send them as JSON array
   } catch (error) {
     console.error("Error fetching registered users:", error);
@@ -333,8 +333,13 @@ router.get("/registered-users", async (req, res) => {
 // DELETE a user by ID
 router.delete("/delete-user/:id", async (req, res) => {
   try {
-    console.log(req.params.id,"ppp")
-    await User.findByIdAndDelete(req.params.id);
+
+const deletedDetails = await RegisteredusersDetails.findByIdAndDelete(req.params.id);
+const emaildel=deletedDetails.personal.email
+const deletedUser = await User.findOneAndDelete({ email:emaildel });
+console.log(emaildel)
+console.log('Deleted user:', deletedUser);
+console.log('Deleted user details:', deletedDetails);
     res.json({ message: "User deleted successfully." });
   } catch (error) {
     console.error("Error deleting user:", error);
