@@ -11,7 +11,8 @@ const axios = require('axios');
 const Admin = require("../models/admin");
 
 
-
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 

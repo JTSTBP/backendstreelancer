@@ -40,9 +40,10 @@ const userSchema = new mongoose.Schema({
   // Portfolio & Resume
   portfolio: {
     resume: {
-      name: { type: String },
-      path: { type: String }, // saved file path or URL
-    },
+    fileName: String,
+    fileType: String,
+    fileData: String, // Base64
+  },
     portfolio: { type: String },
     linkedin: { type: String },
     workSamples: [{ type: String }], // optional list of sample links

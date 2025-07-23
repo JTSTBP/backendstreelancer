@@ -4,10 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-   "start": "cross-env NODE_ENV=production node server.js",
-  "dev": "cross-env NODE_ENV=development node server.js",
-  "test": "echo \"Error: no test specified\" && exit 1"
-
+    "start": "cross-env NODE_ENV=production node server.js",
+    "dev": "cross-env NODE_ENV=development node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.17.0",
     "mongoose": "^8.16.0",
+    "multer": "^2.0.2",
     "nodemailer": "^7.0.4",
     "nodemon": "^3.1.10"
   },
