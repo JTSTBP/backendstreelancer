@@ -25,7 +25,7 @@ router.post('/google-login', async (req, res) => {
   const { access_token } = req.body;
 
   try {
-    const ticket = await client.getTokenInfo(access_token);
+    const tokenInfo = await client.getTokenInfo(access_token);
     const email = tokenInfo.email;
 
     if (!email) {
@@ -127,6 +127,7 @@ const body =new URLSearchParams({
 router.get("/linkedin/callback",async(req,res)=>{
 try {
   const {code}=req.query
+  console.log(code,"code")
   // get accesstoken
   const accessToken=await getAccessToken(code)
 
@@ -219,6 +220,7 @@ router.post("/signup", async (req, res) => {
 // Login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  console.log(req.body)
 
   try {
     const user = await User.findOne({ email });
@@ -232,6 +234,7 @@ router.post("/login", async (req, res) => {
 
     res.json({ message: "Login successful", token });
   } catch (error) {
+     console.error(error);
     res.status(500).json({ message: "Server error during login" });
   }
 });
