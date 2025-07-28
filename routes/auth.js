@@ -169,7 +169,6 @@ const userData=await getUserData(accessToken.access_token)
 }
 })
 
-
 // Registration
 router.post("/register", async(req, res) => {
   const formData = req.body;
@@ -177,7 +176,7 @@ router.post("/register", async(req, res) => {
   try {
    const user = await User.findOne({ email: formData.personal.email });
    const reguser=await RegisteredusersDetails.findOne({ "personal.email":formData.personal.email });
-console.log(user,reguser)
+
  
     if (!user) return res.status(400).json({ message: "No account with this Email please create account" });
    if(reguser) return res.status(400).json({ message: "Email is already registered please use the same email which you create your account" });
@@ -190,6 +189,60 @@ console.log(user,reguser)
   }
  
 
+});
+
+// update
+
+router.put("/updateUserDetails", async(req, res) => {
+  const formData = req.body;
+
+  try {
+   const user = await User.findOne({ email: formData.personal.email });
+    if (!user) return res.status(400).json({ message: "No account with this Email please create account" });
+  
+    const updatedUser = await RegisteredusersDetails.findOneAndUpdate(
+      { "personal.email": formData.personal.email },
+      formData,
+      { new: true, upsert: true } // upsert will create if not found
+    );
+    
+
+    res.json({ message: "Update successful", data: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: "Server error during Updating the Details" });
+  }
+ 
+
+});
+
+
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ message: "Invalid token" });
+    req.email = decoded.email; // extracting email from token payload
+    next();
+  });
+};
+
+// Get particular user details by email
+router.get("/UserDetails", verifyToken, async (req, res) => {
+  try {
+
+     const userDetails=await RegisteredusersDetails.findOne({ "personal.email":req.email });
+    if (!userDetails) {
+      return res.status(404).json({ message: "User details not found" });
+    }
+    res.status(200).json(userDetails);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // Signup
@@ -224,15 +277,16 @@ router.post("/login", async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-   
+    const userDetails=await RegisteredusersDetails.findOne({ "personal.email":email });
+
     if (!user) return res.status(400).json({ message: "Email is not Registered" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign({ id: user._id,email:user.email }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Login successful", token, userDetails });
   } catch (error) {
      console.error(error);
     res.status(500).json({ message: "Server error during login" });
@@ -301,7 +355,6 @@ router.get("/health", (req, res) => {
     linkedinCallback: linkdin, });
 });
 
-
 // Check if a survey exists for a given email
 router.post("/check-dei-survey", async (req, res) => {
   try {
@@ -324,6 +377,8 @@ router.post("/check-dei-survey", async (req, res) => {
     res.status(500).json({ message: "Server error while checking survey" });
   }
 });
+
+
 
 
 // Admin
@@ -350,7 +405,6 @@ router.post("/admin-login", async (req, res) => {
   }
 });
 
-
 // Create dummy admin once
 router.post("/create-dummy-admin", async (req, res) => {
   try {
@@ -371,7 +425,6 @@ router.post("/create-dummy-admin", async (req, res) => {
     res.status(500).json({ message: "Error creating admin", error });
   }
 });
-
 
 // Get ALL registered users' details
 router.get("/registered-users", async (req, res) => {
