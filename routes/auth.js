@@ -147,7 +147,7 @@ const userData=await getUserData(accessToken.access_token)
       // Step 4: Create new user if not found
       user = new User({
         email,
-        name: userData.name,
+        fullName: userData.name,
         isLinkedInUser: true,
         registrationCompleted: false,
         profilePicture: userData.picture,
