@@ -193,7 +193,7 @@ router.post("/register", async(req, res) => {
 
 // update
 
-router.put("/updateUserDetails", async(req, res) => {
+router.post("/updateUserDetails", async(req, res) => {
   const formData = req.body;
 
   try {
@@ -264,7 +264,14 @@ router.post("/signup", async (req, res) => {
     });
 
     await newUser.save();
-    res.status(201).json({ message: "User registered successfully" });
+     const token = jwt.sign(
+      { id: newUser._id, email: newUser.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+    console.log(newUser)
+
+    res.status(201).json({ message: "User registered successfully" ,token, newUser});
   } catch (error) {
     res.status(500).json({ message: "Server error during signup" });
   }
