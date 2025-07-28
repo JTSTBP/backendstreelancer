@@ -434,6 +434,17 @@ router.post("/create-dummy-admin", async (req, res) => {
   }
 });
 
+// get all users
+router.get("/allusers", async (req, res) => {
+  try {
+    const users = await User.find(); // fetch all documents
+    res.json(users); // send them as JSON array
+  } catch (error) {
+    console.error("Error fetching all users:", error);
+    res.status(500).json({ message: "Server error fetching All users." });
+  }
+});
+
 // Get ALL registered users' details
 router.get("/registered-users", async (req, res) => {
   try {
@@ -445,22 +456,35 @@ router.get("/registered-users", async (req, res) => {
   }
 });
 
-// DELETE a user by ID
 router.delete("/delete-user/:id", async (req, res) => {
   try {
+    // Try deleting from RegisteredusersDetails first
+    const deletedDetails = await RegisteredusersDetails.findByIdAndDelete(req.params.id);
 
-const deletedDetails = await RegisteredusersDetails.findByIdAndDelete(req.params.id);
-const emaildel=deletedDetails.personal.email
-const deletedUser = await User.findOneAndDelete({ email:emaildel });
-console.log(emaildel)
-console.log('Deleted user:', deletedUser);
-console.log('Deleted user details:', deletedDetails);
-    res.json({ message: "User deleted successfully." });
+    if (deletedDetails) {
+      // User found in RegisteredusersDetails
+      const email = deletedDetails.personal?.email;
+      if (email) {
+        await User.findOneAndDelete({ email });
+      }
+      return res.json({ message: "User deleted from RegisteredusersDetails and User collection." });
+    }
+
+    // If not found in RegisteredusersDetails, try deleting from User directly
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    if (deletedUser) {
+      return res.json({ message: "User deleted from User collection only." });
+    }
+
+    // If user not found in both collections
+    res.status(404).json({ message: "User not found." });
+
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ message: "Server error deleting user." });
   }
 });
+
 
 
 module.exports = router;
