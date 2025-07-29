@@ -67,18 +67,19 @@ router.post('/google-login', async (req, res) => {
 
 
 // Linkdin login
+const backendurl=process.env.BACKEND_URL
 
 const LINKEDIN_REDIRECT_URI =
    process.env.NODE_ENV === 'development'
     ? 'http://localhost:5000/api/linkedin/callback'
-    :`${process.env.REACT_APP_BACKEND_URL}/api/linkedin/callback`;
+    :`${backendurl}/api/linkedin/callback`;
 
     const frontend_URL =
    process.env.NODE_ENV === 'development'
     ? 'http://localhost:3000'
     :process.env.CLIENT_REDIRECT_URI;
  console.log("NODE_ENV:", process.env.NODE_ENV);
- console.log("backend",process.env.REACT_APP_BACKEND_URL)
+ console.log("backend",backendurl)
 
 
 // get userData
@@ -363,7 +364,7 @@ router.get("/health", (req, res) => {
     clientURL: CLIENT_URL,
     linkedinCallback: linkdin, 
     linkdinurl:LINKEDIN_REDIRECT_URI,
-  backend:process.env.REACT_APP_BACKEND_URL});
+  backend:process.env.BACKEND_URL});
 });
 
 // Check if a survey exists for a given email
