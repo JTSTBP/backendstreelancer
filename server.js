@@ -1,13 +1,18 @@
-const dotenv = require("dotenv");
+
+
+const path = require('path');
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
+require('dotenv').config({ path: path.resolve(process.cwd(), envFile) });
+
+
 const express = require("express");
 const mongoose = require("mongoose");
-const path = require("path");
+
 const cors = require("cors");
 const authRoutes = require("./routes/auth");
 const dataRoutes = require("./routes/data");
 
-const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
-dotenv.config({ path: envFile });
+
 
 console.log("✅ NODE_ENV:", process.env.NODE_ENV);
 
