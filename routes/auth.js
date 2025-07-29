@@ -78,6 +78,7 @@ const LINKEDIN_REDIRECT_URI =
     ? 'http://localhost:3000'
     :process.env.CLIENT_REDIRECT_URI;
  console.log("NODE_ENV:", process.env.NODE_ENV);
+ console.log("backend",process.env.REACT_APP_BACKEND_URL)
 
 
 // get userData
@@ -360,7 +361,9 @@ router.get("/health", (req, res) => {
   res.status(200).json({ message: "Server is running ✅",
     environment: process.env.NODE_ENV,
     clientURL: CLIENT_URL,
-    linkedinCallback: linkdin, linkdinurl:LINKEDIN_REDIRECT_URI});
+    linkedinCallback: linkdin, 
+    linkdinurl:LINKEDIN_REDIRECT_URI,
+  backend:process.env.REACT_APP_BACKEND_URL});
 });
 
 // Check if a survey exists for a given email
