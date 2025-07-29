@@ -360,7 +360,7 @@ router.get("/health", (req, res) => {
   res.status(200).json({ message: "Server is running ✅",
     environment: process.env.NODE_ENV,
     clientURL: CLIENT_URL,
-    linkedinCallback: linkdin, });
+    linkedinCallback: linkdin, linkdinurl:LINKEDIN_REDIRECT_URI});
 });
 
 // Check if a survey exists for a given email
