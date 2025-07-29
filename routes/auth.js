@@ -290,6 +290,12 @@ router.post("/login", async (req, res) => {
     const userDetails=await RegisteredusersDetails.findOne({ "personal.email":email });
 
     if (!user) return res.status(400).json({ message: "Email is not Registered" });
+    if (!user.password) {
+  return res.status(400).json({
+    message: "This account uses Google/LinkedIn login. Please log in using that method."
+  });
+}
+
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });

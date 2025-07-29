@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const path = require("path");
 const cors = require("cors");
 const authRoutes = require("./routes/auth");
+const dataRoutes = require("./routes/data");
 
 const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
 dotenv.config({ path: envFile });
@@ -23,6 +24,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api", authRoutes);
+app.use("/api/data", dataRoutes);
 
 const PORT = process.env.PORT || 5000;
 

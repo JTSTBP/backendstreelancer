@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
     phone: { type: String, required: true },
     gender: { type: String, required: true },
     country: { type: String, required: true },
+    state:{type:String,require:true},
     city: { type: String, required: true },
     careerBreak: { type: String }, // e.g., "on" if selected
     deiIdentities: [{ type: String }], // e.g., ['woman', 'bipoc']
