@@ -3,8 +3,9 @@ const router = express.Router();
 const Industry = require("../models/data/industries");
 
 // Create new Industry
-router.post("/", async (req, res) => {
+router.post("/industries/new", async (req, res) => {
   try {
+   
     const industry = new Industry({ name: req.body.name });
     await industry.save();
     res.status(201).json(industry);
@@ -24,7 +25,7 @@ router.get("/getindustries", async (req, res) => {
 });
 
 // Update Industry
-router.put("/:id", async (req, res) => {
+router.put("/industries/:id", async (req, res) => {
   try {
     const industry = await Industry.findByIdAndUpdate(
       req.params.id,
@@ -39,7 +40,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete Industry
-router.delete("/:id", async (req, res) => {
+router.delete("/industries/:id", async (req, res) => {
   try {
     const industry = await Industry.findByIdAndDelete(req.params.id);
     if (!industry) return res.status(404).json({ message: "Industry not found" });
