@@ -19,37 +19,48 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const router = express.Router();
 
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 
 router.post('/google-login', async (req, res) => {
   const { access_token } = req.body;
 
   try {
-    const tokenInfo = await client.getTokenInfo(access_token);
-    const email = tokenInfo.email;
+    // Call Google UserInfo endpoint
+    const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` }
+    });
+    const profile = await response.json();
+
+    const email = profile.email;
+    const name = profile.name;
+    const picture = profile.picture;
 
     if (!email) {
       return res.status(400).json({ message: "Invalid Google access token" });
     }
 
-    // Check if user exists in your database
     let user = await User.findOne({ email });
-
     let isNewUser = false;
+    let registrationdone=false;
 
     if (!user) {
-      // Create a new user
       user = new User({
         email,
+        fullName: name,
+        profilePicture:picture,
         isGoogleUser: true,
-        registrationCompleted: false, // You can customize based on your logic
+        registrationCompleted: false,
       });
-
       await user.save();
       isNewUser = true;
     }
+    const userDetails=await RegisteredusersDetails.findOne({ "personal.email":email });
+    if(!userDetails){
+     registrationdone=true
+    }
 
-    // Generate your own JWT token
+
     const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
@@ -58,12 +69,60 @@ router.post('/google-login', async (req, res) => {
       message: "Google login successful",
       token,
       isNewUser,
+      name,
+      picture,
+      registrationdone
     });
   } catch (err) {
     console.error(err);
     res.status(400).json({ message: "Invalid Google token" });
   }
 });
+
+
+// router.post('/google-login', async (req, res) => {
+//   const { access_token } = req.body;
+
+//   try {
+//     const tokenInfo = await client.getTokenInfo(access_token);
+//     const email = tokenInfo.email;
+//     console.log(tokenInfo,"tokenInfo")
+//     if (!email) {
+//       return res.status(400).json({ message: "Invalid Google access token" });
+//     }
+
+//     // Check if user exists in your database
+//     let user = await User.findOne({ email });
+
+//     let isNewUser = false;
+
+//     if (!user) {
+//       // Create a new user
+//       user = new User({
+//         email,
+//         isGoogleUser: true,
+//         registrationCompleted: false, // You can customize based on your logic
+//       });
+
+//       await user.save();
+//       isNewUser = true;
+//     }
+
+//     // Generate your own JWT token
+//     const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
+//       expiresIn: "7d",
+//     });
+
+//     res.status(200).json({
+//       message: "Google login successful",
+//       token,
+//       isNewUser,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(400).json({ message: "Invalid Google token" });
+//   }
+// });
 
 
 // Linkdin login
@@ -144,6 +203,7 @@ const userData=await getUserData(accessToken.access_token)
 
     let user = await User.findOne({ email });
     let isNewUser = false;
+    
 
      if (!user) {
       // Step 4: Create new user if not found
@@ -158,11 +218,17 @@ const userData=await getUserData(accessToken.access_token)
       await user.save();
       isNewUser = true;
     }
+
+    const userDetails=await RegisteredusersDetails.findOne({ "personal.email":email });
+   let registrationdone=!!userDetails
+
      const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
- res.redirect(`${frontend_URL}/linkedin-success?token=${token}&isNewUser=${isNewUser}`);
+ res.redirect(
+      `${frontend_URL}/linkedin-success?token=${token}&isNewUser=${isNewUser}&registrationdone=${registrationdone}`
+    );
 
 } catch (error) {
   console.error(error);
@@ -467,33 +533,43 @@ router.get("/registered-users", async (req, res) => {
 });
 
 router.delete("/delete-user/:id", async (req, res) => {
+  const { type } = req.query;  // "User" or "RegisteredusersDetails"
+  const userId = req.params.id;
+
   try {
-    // Try deleting from RegisteredusersDetails first
-    const deletedDetails = await RegisteredusersDetails.findByIdAndDelete(req.params.id);
+    let email = null;
 
-    if (deletedDetails) {
-      // User found in RegisteredusersDetails
-      const email = deletedDetails.personal?.email;
-      if (email) {
-        await User.findOneAndDelete({ email });
+    if (type === "RegisteredusersDetails") {
+      // Try deleting from RegisteredusersDetails first
+      const deletedDetails = await RegisteredusersDetails.findByIdAndDelete(userId);
+      if (deletedDetails) {
+        email = deletedDetails.personal?.email;
       }
-      return res.json({ message: "User deleted from RegisteredusersDetails and User collection." });
+    } 
+    else if (type === "User") {
+      // Try deleting from User first
+      const deletedUser = await User.findByIdAndDelete(userId);
+      if (deletedUser) {
+        email = deletedUser.email;
+      }
+    } 
+    else {
+      return res.status(400).json({ message: "Invalid type parameter." });
     }
 
-    // If not found in RegisteredusersDetails, try deleting from User directly
-    const deletedUser = await User.findByIdAndDelete(req.params.id);
-    if (deletedUser) {
-      return res.json({ message: "User deleted from User collection only." });
+    // If email found, delete from the other collection too
+    if (email) {
+      await User.findOneAndDelete({ email });  // safe delete, won't throw if not found
+      await RegisteredusersDetails.findOneAndDelete({ "personal.email": email });
     }
 
-    // If user not found in both collections
-    res.status(404).json({ message: "User not found." });
-
+    return res.json({ message: "User deleted from both collections if existed." });
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ message: "Server error deleting user." });
   }
 });
+
 
 
 
