@@ -11,7 +11,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const authRoutes = require("./routes/auth");
 const dataRoutes = require("./routes/data");
-
+const adminroutes = require("./routes/admin");
 
 
 console.log("✅ NODE_ENV:", process.env.NODE_ENV);
@@ -28,6 +28,7 @@ app.use(cors());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
+app.use("/admin", adminroutes);
 app.use("/api", authRoutes);
 app.use("/api/data", dataRoutes);
 
